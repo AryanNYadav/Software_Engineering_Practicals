@@ -1,61 +1,62 @@
-import random
-import senders_data as Get
-import smtplib
-import unittest
+import random # Random library to generate OTP
+import re #Using regular expression library to check if email is in valid format
+import smtplib #to send e-mail
 
+class otpSharing:
+    def __init__(self):
+        try:
+            self.server = smtplib.SMTP('smtp.gmail.com', 587)  # connecting to SMTP server at port 587
+            self.server.ehlo()
+            self.server.starttls()
+            self.senderEmail = '<sender email>'
+            self.senderPass = '<sender password>'
+            self.server.login(self.senderEmail, self.senderPass)
+        except:
+            print("Unable to connect to the SMTP server")
+            exit()
 
-class generate_otp(unittest.TestCase):
-    # Fetching Login credentials from the senderdata file
-    Sender_Mail = Get.email
-    PassWord = Get.password
-
-    def _init_(self, receivers_name, receivers_email, n):
-        self.receivers_name = receivers_name
-        self.receivers_email = receivers_email
-        self.n = n
-        OTP = self.create_otp(self.n)
-
-        # Testing length of OTP.
-        self.assertBetween(self.n, 4, 8)
-
-        # Validation of the Email ID
-        self.validation()
-
-        self.send_email(OTP)
-
-    def create_otp(self, n):
-        self.n = n
-        OTP = ""
-        for i in range(self.n):
-            OTP += str(random.randint(0, 9))
-        return (OTP)
-
-    def str(self):
-        return ('{} has {} as an email'.format(self.receivers_name, self.receivers_email))
-
-    def assertBetween(self, n, low, hi):
-        if not (low <= n <= hi):
-            raise AssertionError('Length of OTP is %r must be in between %r and %r' % (n, low, hi))
-        print("**************************************************************************************")
-
-    def validation(self):
-        email = "anyscientist2002@gmail.com"
-        check_email = ("@" and "gmail" and "." and "com") in email  # self.receivers_email
-        if check_email:
-            print("No error in email")
+        self.otp = None
+        for i in range(3):  # Stop the program if user enters a invalid email several times
+            self.eMail = input("Enter email id: ")
+            if self.isEmail(self.eMail):
+                break
+            else:
+                print("Invalid email id!!!")
         else:
-            self.assertTrue(check_email)
-
-    def send_email(self, OTP):
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
-        server.login(self.Sender_Mail, self.PassWord)
-
-        msg = ('Hi {}\n{} is your One Time Password(OTP)'.format(self.receivers_name, OTP))
-        print(msg)
-        server.sendmail(self.Sender_Mail, self.receivers_email, msg)
-        server.quit()
-        print("Email sent!")
+            print("You've entered an invalid email too many times!!! \n Try again later...")
+            exit()
 
 
-g = generate_otp('Suyog', 'suyogpardhi1820@gmail.com', 4)
+    def isEmail(self,email):
+        regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b' #setting email template: *@*.*
+        if re.fullmatch(regex,email): #checking if the entered email matches the template
+            return True
+        else:
+            return False
+
+    def generateOTP(self, n): #function to return a OTP of length n
+        otp=""
+        for i in range(n):
+            otp+=str(random.randint(0,9))
+        return(otp)
+
+    def verifyOTP(self): #Function to verify if entered OTP is correct
+        print("Verify your email id: ")
+        OTP = input("Enter the OTP: ")
+        if OTP==self.otp:
+            print("Email ID successfully verified...")
+        else:
+            print("Invalid OTP")
+    def sendEmail(self,n):
+        self.server.sendmail(self.senderEmail, self.eMail, "Subject:OTP\nYour OTP using OOP is " + self.otp)  # Sending the email
+        print("An {} digit OTP has been sent to {}".format(n, self.eMail))
+
+
+
+if __name__=='__main__':
+    obj=otpSharing()
+    n=int(input("Enter the OTP length: "))
+    obj.otp=obj.generateOTP(n)
+    obj.sendEmail(n)
+    obj.verifyOTP()
+    obj.server.close()
